@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>冥府大冒險</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            text-align: center;
+            padding: 20px;
+        }
+        #game-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 {
+            color: #333;
+        }
+        #situation {
+            margin-bottom: 20px;
+            font-size: 1.2em;
+            line-height: 1.5;
+        }
+        .choice-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            margin: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        .choice-btn:hover {
+            background-color: #45a049;
+        }
+        #restart-btn {
+            background-color: #f44336;
+            display: none;
+            margin: 20px auto;
+        }
+        #back-btn {
+            background-color: #2196F3;
+            display: none;
+            position: relative;
+            top: 10px;
+            left: 10px;
+            padding: 8px 16px;
+            font-size: 0.9em;
+        }
+        #back-btn:hover {
+            background-color: #1976D2;
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <button class="choice-btn" id="back-btn" onclick="goBack()">返回上一步</button>
+        <h1>冥府大冒險</h1>
+        <div id="situation"></div>
+        <button class="choice-btn" id="choice1" onclick="makeChoice(1)"></button>
+        <button class="choice-btn" id="choice2" onclick="makeChoice(2)"></button>
+        <button class="choice-btn" id="restart-btn" onclick="startGame()">重新開始</button>
+    </div>
+
+    <script>
+        const gameTree = {
+            'level1': {
+                desc: "你站在冥府入口，鬼差（長得像牛頭馬面，但戴著老式眼鏡）遞給你一疊紙錢，說：「燒點給祖先吧，現世後人燒給你，你也得燒給前人。這是規矩。」旁邊的祭壇冒著青煙，紙錢燒後化成金光，讓冥府氣氛溫暖。你猶豫：這是真的嗎？還是一場好夢？",
+                choices: [
+                    { text: "你點燃紙錢，覺得「寧信其有」，想看看會發生什麼", next: "level2_1" },
+                    { text: "你覺得這是迷信，搖頭拒絕，紙錢留在手中", next: "level2_2" }
+                ]
+            },
+            'level2_1': {
+                desc: "你燒了紙錢，紙錢化成金光，冥府街道變得明亮，祭壇上的果盤散發香氣。一位祖先鬼魂（穿著長袍，像你太爺爺）飄來，笑說：「後生仔，燒得好！再供點水果，咱們聊聊輪迴的事？」身後的祭壇旁，有個老太太鬼魂在整理供品，氣氛像過年團聚。你心想：繼續供奉，還是先顧自己？",
+                choices: [
+                    { text: "你挑了個大蘋果放在祭壇，覺得「信一下也不壞」", next: "level3_1" },
+                    { text: "你覺得這太麻煩，想先探索冥府其他地方", next: "level3_2" }
+                ]
+            },
+            'level2_2': {
+                desc: "你拒絕燒紙錢，鬼差聳聳肩，冥府街道變得冷清，紙錢在你手中變成灰塵。遠處傳來議論聲，一位穿長袍的鬼魂走來，竟是孔子！他捋著鬍子，說：「不知生，焉知死？老夫如今知死後世界，燒點紙錢祭品，總有意義。你試試？」你看著他，覺得這老頭有點眼熟，但又懷疑這是幻覺。",
+                choices: [
+                    { text: "你點頭，決定試著燒紙錢，尊重孔子的建議", next: "level3_3" },
+                    { text: "你笑說：「老先生，你思想也太老舊了吧？我不信這套！」", next: "level3_4" }
+                ]
+            },
+            'level3_1': {
+                desc: "你供上蘋果，祖先鬼魂高興地說：「有心了！我們有些心結未解，幫幫忙？」他指著祭壇後的牌位，說有些祖先因現世後人忘了拜祭，心生怨氣。你看到牌位上寫著家族名字，隱約有熟悉感。旁邊的紙錢堆閃著微光，像在催促你行動。你心想：幫他們，還是不幫？",
+                choices: [
+                    { text: "你燒更多紙錢，試著安撫祖先，覺得「信一下挺好」", next: "level4_1" },
+                    { text: "你覺得這是心理作用，搖頭不理", next: "level4_2" }
+                ]
+            },
+            'level3_2': {
+                desc: "你沒供奉祭品，祖先嘆氣說：「年輕人忙啊，算了。」你轉身探索冥府，卻撞見李白！他醉醺醺地拿著酒壺，說：「人生得意須盡歡，燒點紙錢給我這老詩人吧？現世有人燒，我還能多寫幾首！」他身後的冥府酒肆熱鬧非凡，像中元節夜市。你心想：聽他的，還是繼續逛？",
+                choices: [
+                    { text: "你覺得試試無妨，燒了紙錢給李白", next: "level4_3" },
+                    { text: "你笑說：「李白，詩夠多了吧？我不燒！」", next: "level4_4" }
+                ]
+            },
+            'level3_3': {
+                desc: "你聽孔子建議，燒了紙錢，冥府亮起溫暖光芒。孔子點頭，帶你到一扇輪迴門前，說：「此門通往新生，信則入，不信則留。現世後人若拜祭你，你將福報加身。」門上刻著蓮花圖案，散發淡淡香氣，像清明節的墓園。你心想：進門，還是懷疑？",
+                choices: [
+                    { text: "你相信輪迴，踏入門中", next: "level4_5" },
+                    { text: "你覺得這太玄，猶豫不進", next: "level4_6" }
+                ]
+            },
+            'level3_4': {
+                desc: "你嘲笑孔子後，冥府突然一震，街道變得迷霧繚繞。你誤入一處祭壇，見到一位祖先（像你曾祖母），她慈祥地說：「後生仔，別倔了，燒點紙錢吧，當是給家族留個念想。」祭壇上果盤散發香氣，紙錢堆旁還有小孩鬼魂在玩耍，像個溫馨的家族聚會。你心想：試試，還是堅持？",
+                choices: [
+                    { text: "你燒紙錢，覺得「試試也不壞」", next: "level4_7" },
+                    { text: "你說：「這是夢，我不信！」", next: "level4_8" }
+                ]
+            },
+            'level4_1': {
+                desc: "你在冥府幫祖先化解怨氣，燒了滿滿一堆紙錢，祭壇上的香燭散發溫暖光芒。祖先（像你太爺爺）拍拍你肩膀，說：「後生仔，做得好！最後問你，信不信這拜祭真能連繫咱們？」身後的牌位閃著金光，紙錢化成飛舞的蓮花，冥府像清明節的墓園，溫馨又莊重。你心想：這一切，真的有意義嗎？你幫祖先化解怨氣，紙錢燒得火光沖天。祖先笑問：「信不信這套真有回響？」祭壇旁的小孩鬼魂在玩紙鶴，氣氛像中元節夜市。你搖頭，心想這可能是個長夢，但幫他們的感覺還不錯。",
+                choices: [
+                    { text: "你點頭，說：「信一下，感覺挺好」", next: "level5_1" },
+                    { text: "你笑說：「夢吧？當娛樂了」", next: "level5_2" }
+                ]
+            },
+            'level4_2': {
+                desc: "你質疑祖先怨氣的存在，但看著他真誠又慈祥的眼神，你還是燒了紙錢試試。祭壇香氣濃郁，祖先說：「質疑也好，最後信不信，拜祭總有意義。」冥府街道飄滿紙錢灰，遠處有鬼魂在唱戲，像中元節的熱鬧場面。你心想：試著信，會不會有什麼不同？你質疑怨氣，燒紙錢只當試試。祖先笑說：「隨你吧，試試也不壞。」冥府像清明節墓園，紙錢灰飄在空中。你心想：這一切，真的只是夢嗎？",
+                choices: [
+                    { text: "你說：「好吧，信一下試試。」", next: "level5_3" },
+                    { text: "你搖頭：「這應該是幻覺。」", next: "level5_4" }
+                ]
+            },
+            'level4_3': {
+                desc: "你後悔忽略祭品，補燒紙錢給李白。他醉醺醺地說：「好後生！信不信這紙錢能讓我再寫首詩？」冥府酒肆熱鬧如中元節夜市，紙錢化成星光。你心想：這詩人真有趣，信一下會怎樣？你補燒紙錢，李白高興吟詩，但你覺得是夢。他笑說：「信不信，隨你心！」酒肆的紙錢香繞著你，你心想：這真的只是幻覺嗎？",
+                choices: [
+                    { text: "你笑說：「信你，燒多點！」", next: "level5_5" },
+                    { text: "你說：「夢裡的詩，算了吧。」", next: "level5_6" }
+                ]
+            },
+            'level4_4': {
+                desc: "你忽略祭品，李白勸你燒紙錢，你猶豫後試試。他敬你一杯冥府酒，說：「信這套，生活多點詩意！」酒肆熱鬧如清明節市集，紙錢星光閃耀。你心想：試著信，會不會更有趣？最終，你不理李白建議，覺得是夢。他聳肩說：「隨你，詩我照寫！」酒肆紙錢香飄，你心想：這一切，真的只是幻想？",
+                choices: [
+                    { text: "你說：「好，信一下！」", next: "level5_7" },
+                    { text: "你笑說：「酒好喝，但我不信。」", next: "level5_8" }
+                ]
+            },
+            'level4_5': {
+                desc: "你聽孔子建議，進入輪迴門，門後蓮花香撲鼻。孔子說：「信輪迴，後人拜祭有回響。」冥府像清明節墓園，溫暖的光芒環繞。你心想：這門，真的通往某處嗎？你進輪迴門，但覺得是幻覺。孔子笑說：「信不信，隨你心。」門後香氣像中元節，你心想：這真的只是夢嗎？",
+                choices: [
+                    { text: "你說：「信了，進去看看！」", next: "level5_9" },
+                    { text: "你說：「門挺美，但只是夢吧？」", next: "level5_10" }
+                ]
+            },
+            'level4_6': {
+                desc: "你懷疑輪迴門，孔子說：「試試信，後人會記得你。」門前蓮花香濃，冥府像清明節墓園。你心想：試著信，會不會有什麼收穫？最終，你懷疑門的真實性，孔子聳肩說：「隨你。」門前香氣繚繞，你心想：這一切，真的只是幻覺？",
+                choices: [
+                    { text: "你說：「好吧，信一下！」", next: "level5_11" },
+                    { text: "你說：「門而已，不信。」", next: "level5_12" }
+                ]
+            },
+            'level4_7': {
+                desc: "你試拜祖先，燒紙錢。祖先（像曾祖母）笑說：「試試好，信不信這拜祭有回響？」祭壇香氣如中元節，你心想：信一下，會不會更有意思？你試拜祖先但覺得是夢。祖先笑說：「隨你，試試也不壞。」祭壇香味濃，你心想：這真的只是幻想？",
+                choices: [
+                    { text: "你說：「信了，試試看！」", next: "level5_13" },
+                    { text: "你說：「燒了當玩，這只是夢吧。」", next: "level5_14" }
+                ]
+            },
+            'level4_8': {
+                desc: "你否認冥府，卻遇包拯，他說：「試試信，燒點紙錢，後人會記得你。」祭壇旁紙錢飛舞，氣氛如清明節。你心想：試著信，會不會有點不同？最終，你否認一切，包拯笑說：「隨你，冥府這出戲你看過就好。」紙錢香繞，你心想：這一切，真只是夢？",
+                choices: [
+                    { text: "你說：「好，信一下試試！」", next: "level5_15" },
+                    { text: "你說：「包大人，這是夢吧？」", next: "level5_16" }
+                ]
+            },
+            'level5_1': { desc: "你燒了紙錢，又供上祭品，祖先鬼魂露出笑容，拉著你化解心結。你聽他們聊起舊事，從清明節的掃墓到中元節的燒紙錢，一一安撫他們的怨氣。冥府的氣氛像過年一樣熱鬧，紙錢香味瀰漫。你最終決定相信這一切，覺得試試這些傳統挺有趣。突然，冥府淡去，你醒來躺在醫院床上，家人圍繞，說夢到祖先託夢，讓他們更重視拜祭。從那以後，家族每年清明節都多燒點紙錢，家裡的牌位也擦得亮亮的，大家聊天時總多幾分溫暖的回憶。<br><br>你想：原來燒個紙錢，能讓家族的聚會多點故事，挺不錯的吧。" },
+            'level5_2': { desc: "你幫祖先化解怨氣，燒了更多紙錢，但心裡還是覺得這可能是個長夢。祖先感謝你，冥府的祭壇亮起溫柔的光芒，你卻搖頭笑說「當娛樂了」。醒來後，發現自己躺在床上，家人說你昏迷時喃喃自語，提起祖先的事。他們笑著開始多準備點祭品，但你不以為然，生活繼續忙碌。只是偶爾清明節時，家人燒紙錢的香味讓你想起那夢境，感覺有點親切。<br><br>你想：不信也沒關係，但萬一真有點什麼，燒個紙錢當保險，蠻搞笑的念頭吧？" },
+            'level5_3': { desc: "你質疑祖先的怨氣是不是幻覺，但聽他們細說現世拜祭的點滴後，還是選擇相信，試著燒紙錢安撫。祖先點頭，冥府的果盤香氣更濃了。你醒來時，家人正準備中元節的供品，說最近總夢到祖先微笑。從此，家族開始更認真設牌位，每年燒紙錢時多聊幾句家常，感覺傳統變成了一種溫暖的習慣。<br><br>你想：質疑完再試試相信，發現這些習俗還挺能拉近家人的距離。" },
+            'level5_4': { desc: "你堅持質疑怨氣的存在，覺得這是腦補的夢境，祖先嘆氣但沒強求。你醒來後，生活如常，家人偶爾提燒紙錢的事，你笑笑說「隨便吧」。只是清明節時，看著他們供奉祭品，你心裡閃過那夢中香味，覺得有趣。<br><br>你想：不信無妨，但想想「寧可信其有」，下次清明節試燒張紙錢當好玩，也行啊？" },
+            'level5_5': { desc: "你忽略祭品，但後悔後補燒紙錢，李白醉醺醺地出現，笑說「後生有心！」他吟詩感謝，你決定相信這些傳統的趣味。冥府酒肆熱鬧起來，你醒來時，家人說你昏睡中哼起古詩，他們開始每年拜祭時多讀點李白的作品，家裡多了幾本詩集，大家閒聊時總笑鬧起來。<br><br>你想：後悔了補一補，發現傳統能讓生活多點詩情畫意。" },
+            'level5_6': { desc: "你補燒紙錢給李白，但他吟詩時你還是覺得是夢，不當真。醒來後，家人笑說你夢話裡提李白，他們偶爾讀讀詩，但你繼續忙自己的事。只是中元節時，聞到燒紙錢的味道，你會心一笑。<br><br>你想：不信也沒損失，但補燒那張紙錢的念頭，聽起來像個有趣的「備案」吧？" },
+            'level5_7': { desc: "你堅持忽略祭品，但李白的詩讓你轉念，試著相信並燒紙錢。他高興地敬你一杯冥府酒，你醒來後，家人開始重視文化傳承，每年清明節多燒紙錢給詩人先賢，家裡的書架多了古籍，大家聚會時總多幾分文藝氛圍。<br><br>你想：忽略了再轉信，發現這些習慣能讓家族多點浪漫色彩。" },
+            'level5_8': { desc: "你忽略李白的建議，堅持不信，醒來後生活照舊。家人偶爾聊起燒紙錢的事，你搖頭笑笑。只是聽到他們讀李白的詩時，你心想那夢境還挺逗。<br><br>你想：不信沒問題，但萬一「信其有」，忽略的詩句說不定哪天會冒出來取笑你呢？" },
+            'level5_9': { desc: "你聽孔子建議，進入輪迴門，相信傳統的輪迴概念。門後光芒閃現，你醒來時，家人說最近總夢到孔子名言，他們開始每年燒紙錢時多念幾句論語，家族聚會變得更有哲理味，大家聊天時總多幾分思考的樂趣。<br><br>你想：聽勸進門，發現這些傳統能讓生活多點智慧的回響。" },
+            'level5_10': { desc: "你進輪迴門但不信，覺得是巧合。醒來後，家人偶爾提燒紙錢的事，你好奇但沒深想。只是清明節時，他們的供品讓你想起孔子的話，感覺有點趣味。<br><br>你想：不信也行，但想想輪迴門那樣的「備案」，挺像人生的小驚喜吧？" },
+            'level5_11': { desc: "你懷疑輪迴門，但聽孔子解釋後轉信，踏入其中。你醒來後，家人開始更重視中元節的拜祭，說是為了輪迴的福報，家裡的牌位多了幾分莊重，大家聚會時總多溫情。<br><br>你想：懷疑完再信，發現傳統能讓家族多份牽掛的溫暖。" },
+            'level5_12': { desc: "你懷疑輪迴門到底，堅持不信，醒來生活如常。家人偶爾燒紙錢，你笑說隨他們。只是聽到他們聊輪迴時，你心想那夢還蠻有哲理。<br><br>你想：不信無礙，但門沒進的遺憾，說不定是個幽默的「寧可信其有」提醒呢？" },
+            'level5_13': { desc: "你嘲笑孔子後遇祖先，試著拜祭並相信。祖先慈祥點頭，你醒來時，家人說最近祖先託夢，讓他們多燒紙錢，家族掃墓時總多幾分親切的聊天，傳統變成溫暖的紐帶。<br><br>你想：嘲笑完再試試，發現拜祭能讓家人多點團聚的樂子。" },
+            'level5_14': { desc: "你試拜祖先但不信，醒來後家人生活如常，偶爾提燒紙錢的事，你覺得有趣但沒當真。只是中元節的香味，讓你想起那祖先的笑容。<br><br>你想：不信也沒事，但試拜的那一刻，聽起來像個搞笑的「保險措施」吧？" },
+            'level5_15': { desc: "你徹底否認後，被包拯（另一位名人）勸說轉信，試燒紙錢。你醒來時，家人開始設牌位，說是為了心安，家族聚會時總多幾分公正的家風，大家笑鬧中帶著溫暖。<br><br>你想：否認完再轉信，發現傳統能讓生活多點平衡的趣味。" },
+            'level5_16': { desc: "你徹底否認一切，醒來生活照舊。家人偶爾燒紙錢，你搖頭但沒反對。只是清明節時，看著他們供奉，你心想那冥府夢還挺逗趣。<br><br>你想：不信無妨，但想想「寧可信其有」，否認的結局說不定會在下個節日裡開個小玩笑呢？" }
+        };
+
+        let currentNode = 'level1';
+        let history = [];
+
+        function startGame() {
+            currentNode = 'level1';
+            history = [];
+            document.getElementById('restart-btn').style.display = 'none';
+            document.getElementById('back-btn').style.display = 'none';
+            updateGame();
+        }
+
+        function updateGame() {
+            const node = gameTree[currentNode];
+            document.getElementById('situation').innerHTML = node.desc;
+            const choice1Btn = document.getElementById('choice1');
+            const choice2Btn = document.getElementById('choice2');
+            const backBtn = document.getElementById('back-btn');
+            if (node.choices) {
+                choice1Btn.textContent = node.choices[0].text;
+                choice2Btn.textContent = node.choices[1].text;
+                choice1Btn.style.display = 'inline-block';
+                choice2Btn.style.display = 'inline-block';
+                backBtn.style.display = history.length > 0 ? 'inline-block' : 'none';
+            } else {
+                choice1Btn.style.display = 'none';
+                choice2Btn.style.display = 'none';
+                backBtn.style.display = history.length > 0 ? 'inline-block' : 'none';
+                document.getElementById('restart-btn').style.display = 'block';
+                display = 'block';
+            }
+        }
+
+        function makeChoice(choiceIndex) {
+            const node = gameTree[currentNode];
+            if (node.choices && node.choices[choiceIndex - 1]) {
+                history.push(currentNode);
+                currentNode = node.choices[choiceIndex - 1].next;
+                updateGame();
+            }
+        }
+
+        function goBack() {
+            if (history.length > 0) {
+                currentNode = history.pop();
+                document.getElementById('restart-btn').style.display = 'none';
+                updateGame();
+            }
+        }
+
+        startGame();
+    </script>
+</body>
+</html>
